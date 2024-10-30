@@ -1,0 +1,217 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct fruta {
+    int codigo;
+    char nome[50];
+    int quantidade;
+    float preco;
+    struct fruta *prox;
+};
+typedef struct fruta Fruta;
+
+Fruta* criarLista() {
+    return NULL;
+}
+
+Fruta* buscarFruta(Fruta *lista, int codigo) {
+    Fruta *p = lista;
+    while (p != NULL) {
+        if (p->codigo == codigo)
+            return p;
+        p = p->prox;
+    }
+    return NULL;
+}
+
+int verificarCodigoRepetido(Fruta *lista, int codigo) {
+    return buscarFruta(lista, codigo) != NULL;
+}
+
+Fruta* cadastrarFruta(Fruta *lista) {
+    Fruta *nova = (Fruta*) malloc(sizeof(Fruta));
+    printf("Digite o código da fruta: ");
+    scanf("%d", &nova->codigo);
+
+    if (verificarCodigoRepetido(lista, nova->codigo)) {
+        printf("Código já cadastrado!\n");
+        free(nova);
+        return lista;
+    }
+
+    printf("Digite o nome da fruta: ");
+    scanf("%s", nova->nome);
+    printf("Digite a quantidade em estoque: ");
+    scanf("%d", &nova->quantidade);
+    printf("Digite o preço da fruta: ");
+    scanf("%f", &nova->preco);
+
+    nova->prox = lista;
+    return nova;
+}
+
+void listarFrutas(Fruta *lista) {
+    Fruta *p = lista;
+    if (p == NULL) {
+        printf("Nenhuma fruta cadastrada.\n");
+        return;
+    }
+    printf("Frutas cadastradas:\n");
+    while (p != NULL) {
+        printf("Código: %d, Nome: %s, Quantidade: %d, Preço: %.2f\n", p->codigo, p->nome, p->quantidade, p->preco);
+        p = p->prox;
+    }
+}
+
+void buscarFrutaPorCodigo(Fruta *lista) {
+    int codigo;
+    printf("Digite o código da fruta: ");
+    scanf("%d", &codigo);
+    Fruta *fruta = buscarFruta(lista, codigo);
+    if (fruta != NULL) {
+        printf("Código: %d, Nome: %s, Quantidade: %d, Preço: %.2f\n", fruta->codigo, fruta->nome, fruta->quantidade, fruta->preco);
+    } else {
+        printf("Fruta não encontrada.\n");
+    }
+}
+
+void alterarFruta(Fruta *lista) {
+    int codigo;
+    printf("Digite o código da fruta a ser alterada: ");
+    scanf("%d", &codigo);
+    Fruta *fruta = buscarFruta(lista, codigo);
+    if (fruta != NULL) {
+        printf("Digite o novo nome: ");
+        scanf("%s", fruta->nome);
+        printf("Digite a nova quantidade: ");
+        scanf("%d", &fruta->quantidade);
+        printf("Digite o novo preço: ");
+        scanf("%f", &fruta->preco);
+        printf("Fruta alterada com sucesso.\n");
+    } else {
+        printf("Fruta não encontrada.\n");
+    }
+}
+
+Fruta* excluirFruta(Fruta *lista, int codigo) {
+    Fruta *anterior = NULL;
+    Fruta *p = lista;
+    
+    while (p != NULL && p->codigo != codigo) {
+        anterior = p;
+        p = p->prox;
+    }
+    
+    if (p == NULL) {
+        printf("Fruta não encontrada.\n");
+        return lista;
+    }
+    
+    if (p->quantidade > 0) {
+        printf("Fruta não pode ser excluída, pois ainda há estoque.\n");
+        return lista;
+    }
+    
+    if (anterior == NULL) {
+        lista = p->prox;
+    } else {
+        anterior->prox = p->prox;
+    }
+    
+    free(p);
+    printf("Fruta excluída com sucesso.\n");
+    return lista;
+}
+
+void registrarVenda(int codigo, const char* nome, int quantidade, float preco) {
+    FILE *file = fopen("vendas.txt", "a");
+    if (file == NULL) {
+        printf("Erro ao abrir arquivo de vendas.\n");
+        return;
+    }
+    fprintf(file, "Código: %d, Nome: %s, Quantidade: %d, Total: %.2f\n", codigo, nome, quantidade, quantidade * preco);
+    fclose(file);
+}
+
+void venderFruta(Fruta *lista) {
+    int codigo, quantidade;
+    printf("Digite o código da fruta: ");
+    scanf("%d", &codigo);
+    Fruta *fruta = buscarFruta(lista, codigo);
+    if (fruta == NULL) {
+        printf("Fruta não encontrada.\n");
+        return;
+    }
+    printf("Digite a quantidade a ser vendida: ");
+    scanf("%d", &quantidade);
+    if (quantidade > fruta->quantidade) {
+        printf("Quantidade insuficiente em estoque.\n");
+        return;
+    }
+    fruta->quantidade -= quantidade;
+    registrarVenda(fruta->codigo, fruta->nome, quantidade, fruta->preco);
+    printf("Venda realizada com sucesso.\n");
+}
+
+void liberarLista(Fruta *lista) {
+    Fruta *p = lista;
+    while (p != NULL) {
+        Fruta *temp = p->prox;
+        free(p);
+        p = temp;
+    }
+}
+
+void mostrarMenu() {
+    printf("\nMenu:\n");
+    printf("1. Cadastrar fruta\n");
+    printf("2. Listar frutas\n");
+    printf("3. Buscar fruta\n");
+    printf("4. Alterar fruta\n");
+    printf("5. Excluir fruta\n");
+    printf("6. Vender fruta\n");
+    printf("7. Sair\n");
+}
+
+int main() {
+    Fruta *lista = criarLista();
+    int opcao, codigo;
+
+    while (1) {
+        mostrarMenu();
+        printf("\nEscolha uma opção: ");
+        scanf("%d", &opcao);
+
+        switch(opcao) {
+            case 1:
+                lista = cadastrarFruta(lista);
+                break;
+            case 2:
+                listarFrutas(lista);
+                break;
+            case 3:
+                buscarFrutaPorCodigo(lista);
+                break;
+            case 4:
+                alterarFruta(lista);
+                break;
+            case 5:
+                printf("Digite o código da fruta a ser excluída: ");
+                scanf("%d", &codigo);
+                lista = excluirFruta(lista, codigo);
+                break;
+            case 6:
+                venderFruta(lista);
+                break;
+            case 7:
+                printf("Saindo do programa...\n");
+                liberarLista(lista);
+                return 0;
+            default:
+                printf("Opção inválida. Por favor, tente novamente.\n");
+        }
+
+        while(getchar() != '\n');
+    }
+}
