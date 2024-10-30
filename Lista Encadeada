@@ -1,0 +1,154 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_LISTA 100
+
+struct lista {
+    int info;
+    struct lista *prox;
+};
+typedef struct lista Lista;
+
+Lista* criarLista() {
+    return NULL;
+}
+
+Lista* inserirLista(Lista *l, int valor) {
+    Lista *novo = (Lista*) malloc(sizeof(Lista));
+    novo->info = valor;
+    novo->prox = l;
+    return novo;
+}
+
+void exibirLista(Lista *l) {
+    Lista *p = l;
+    while (p != NULL) {
+        printf("%d -> ", p->info);
+        p = p->prox;
+    }
+    printf("NULL\n");
+}
+
+int verificarVazia(Lista *l) {
+    return (l == NULL);
+}
+
+Lista* buscarLista(Lista *l, int valor) {
+    Lista *p = l;
+    while (p != NULL) {
+        if (p->info == valor)
+            return p;
+        p = p->prox;
+    }
+    return NULL;
+}
+
+Lista* excluirLista(Lista *l, int valor) {
+    Lista *anterior = NULL;
+    Lista *p = l;
+    
+    while (p != NULL && p->info != valor) {
+        anterior = p;
+        p = p->prox;
+    }
+    
+    if (p == NULL) {
+        return l;
+    }
+    
+    if (anterior == NULL) {
+        l = p->prox;
+    } else {
+        anterior->prox = p->prox;
+    }
+    
+    free(p);
+    return l;
+}
+
+void liberarLista(Lista *l) {
+    Lista *p = l;
+    while (p != NULL) {
+        Lista *temp = p->prox;
+        free(p);
+        p = temp;
+    }
+}
+
+Lista* inserirOrdemCrescente(Lista *l, int valor) {
+    Lista *novo = (Lista*) malloc(sizeof(Lista));
+    novo->info = valor;
+
+    if (l == NULL || l->info > valor) {
+        novo->prox = l;
+        return novo;
+    }
+    
+    Lista *p = l;
+    while (p->prox != NULL && p->prox->info < valor) {
+        p = p->prox;
+    }
+    
+    novo->prox = p->prox;
+    p->prox = novo;
+    
+    return l;
+}
+
+int main() {
+    Lista *minhaLista = criarLista();
+    int opcao, valor;
+    
+    printf("Menu:\n");
+    printf("1. Inserir número na lista\n");
+    printf("2. Exibir lista\n");
+    printf("3. Buscar número na lista\n");
+    printf("4. Excluir número da lista\n");
+    printf("5. Liberar lista\n");
+    printf("6. Sair\n");
+
+    while (1) {
+        printf("\nEscolha uma opção: ");
+        scanf("%d", &opcao);
+
+        switch(opcao) {
+            case 1:
+                printf("Digite um número para inserir: ");
+                scanf("%d", &valor);
+                minhaLista = inserirOrdemCrescente(minhaLista, valor);
+                break;
+            case 2:
+                printf("Lista em ordem crescente: ");
+                exibirLista(minhaLista);
+                break;
+            case 3:
+                printf("Digite o número para buscar: ");
+                scanf("%d", &valor);
+                if (buscarLista(minhaLista, valor)) {
+                    printf("Número encontrado.\n");
+                } else {
+                    printf("Número não encontrado.\n");
+                }
+                break;
+            case 4:
+                printf("Digite o número para excluir: ");
+                scanf("%d", &valor);
+                minhaLista = excluirLista(minhaLista, valor);
+                printf("Número excluído com sucesso.\n");
+                break;
+            case 5:
+                liberarLista(minhaLista);
+                minhaLista = NULL;
+                printf("Lista liberada com sucesso.\n");
+                break;
+            case 6:
+                printf("Saindo do programa...\n");
+                liberarLista(minhaLista);
+                return 0;
+            default:
+                printf("Opção inválida. Por favor, tente novamente.\n");
+        }
+
+        while(getchar() != '\n');
+    }
+}
