@@ -1,0 +1,71 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <stdbool.h>
+
+#define NUM_FILOSOFOS 5
+
+pthread_mutex_t garfos[NUM_FILOSOFOS];
+bool terminar = false;
+
+void *filosofo(void *id) {
+    int fil_id = *(int *)id;
+    int garfo_esq = fil_id;
+    int garfo_dir = (fil_id + 1) % NUM_FILOSOFOS;
+
+    while (!terminar) {
+        printf("Filósofo %d está pensando.\n", fil_id);
+        sleep(1);
+
+        if (fil_id % 2 == 0) {
+            pthread_mutex_lock(&garfos[garfo_esq]);
+            pthread_mutex_lock(&garfos[garfo_dir]);
+        } else {
+            pthread_mutex_lock(&garfos[garfo_dir]);
+            pthread_mutex_lock(&garfos[garfo_esq]);
+        }
+
+        printf("Filósofo %d está comendo.\n", fil_id);
+        sleep(2);
+
+        pthread_mutex_unlock(&garfos[garfo_esq]);
+        pthread_mutex_unlock(&garfos[garfo_dir]);
+    }
+    return NULL;
+}
+
+void *temporizador(void *args) {
+    sleep(60);
+    terminar = true;
+    return NULL;
+}
+
+int main() {
+    pthread_t filosofos[NUM_FILOSOFOS];
+    pthread_t timer;
+    int ids[NUM_FILOSOFOS];
+
+    for (int i = 0; i < NUM_FILOSOFOS; i++) {
+        pthread_mutex_init(&garfos[i], NULL);
+    }
+
+    for (int i = 0; i < NUM_FILOSOFOS; i++) {
+        ids[i] = i;
+        pthread_create(&filosofos[i], NULL, filosofo, &ids[i]);
+    }
+
+    pthread_create(&timer, NULL, temporizador, NULL);
+
+    for (int i = 0; i < NUM_FILOSOFOS; i++) {
+        pthread_join(filosofos[i], NULL);
+    }
+    
+    pthread_join(timer, NULL);
+
+    for (int i = 0; i < NUM_FILOSOFOS; i++) {
+        pthread_mutex_destroy(&garfos[i]);
+    }
+
+    return 0;
+}
